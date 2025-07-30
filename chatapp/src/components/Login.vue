@@ -2,7 +2,16 @@
 import { inject, ref } from "vue"
 import { useRouter } from "vue-router"
 import socketManager from '../socketManager.js'
+ザー名が入力されているかチェック
+  if (!inputUserName.value.trim()) {
+    alert('入力が空です。値を入力してください。')
+  }
+  // 入室メッセージを送信
 
+  // 全体で使用するnameに入力されたユーザー名を格納
+
+  // チャット画面へ遷移
+  router.push({ name: "chat" })
 // #region global state
 const userName = inject("userName")
 // #endregion
@@ -19,14 +28,7 @@ const inputUserName = ref("")
 // #region browser event handler
 // 入室メッセージをクライアントに送信する
 const onEnter = () => {
-  // ユーザー名が入力されているかチェック
-
-  // 入室メッセージを送信
-
-  // 全体で使用するnameに入力されたユーザー名を格納
-
-  // チャット画面へ遷移
-  router.push({ name: "chat" })
+  // ユー
 }
 // #endregion
 </script>
@@ -36,7 +38,7 @@ const onEnter = () => {
     <h1 class="text-h3 font-weight-medium">Vue.js Chat サンプル</h1>
     <div class="mt-10">
       <p>ユーザー名</p>
-      <input type="text" class="user-name-text" />
+      <input type="text" class="user-name-text" v-model="inputUserName" />
     </div>
     <button type="button" @click="onEnter" class="button-normal">入室する</button>
   </div>
