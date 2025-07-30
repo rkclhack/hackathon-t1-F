@@ -2,7 +2,24 @@
 import { inject, ref } from "vue"
 import { useRouter } from "vue-router"
 import socketManager from '../socketManager.js'
-ザー名が入力されているかチェック
+
+// #region global state
+const userName = inject("userName")
+// #endregion
+
+// #region local variable
+const router = useRouter()
+const socket = socketManager.getInstance()
+// #endregion
+
+// #region reactive variable
+const inputUserName = ref("")
+// #endregion
+
+// #region browser event handler
+// 入室メッセージをクライアントに送信する
+const onEnter = () => {
+  // ユーザー名が入力されているかチェック
   if (!inputUserName.value.trim()) {
     alert('入力が空です。値を入力してください。')
   }
