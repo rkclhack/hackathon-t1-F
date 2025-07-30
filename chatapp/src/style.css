@@ -3,8 +3,9 @@ body {
 }
 
 .button-normal {
-  border: 1px solid #555;
-  background-color: #eee;
+  /*border: 1px solid #555;*/
+  background-color: #00bfff;
   border-radius: 4px;
-  padding: 4px;
+  padding: 5px 10px;
+  color: #fff;
 }

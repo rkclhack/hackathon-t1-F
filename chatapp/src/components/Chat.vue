@@ -45,7 +45,7 @@ const onExit = () => {
   chatContent.value = ""
 
   // チャット画面から退室する
-  chatList.push(`${userName.value}さんが退室しました。`)
+  chatList.unshift(`${userName.value}さんが退室しました。`)
 }
 
 // メモを画面上に表示する
@@ -55,7 +55,7 @@ const onMemo = () => {
     return
   }
   // メモの内容を表示
-  chatList.push(`${userName.value}さんのメモ: ${chatContent.value}`)
+  chatList.unshift(`${userName.value}さんのメモ: ${chatContent.value}`)
 
   // 入力欄を初期化
   chatContent.value = ""
@@ -65,18 +65,18 @@ const onMemo = () => {
 // #region socket event handler
 // サーバから受信した入室メッセージ画面上に表示する
 const onReceiveEnter = (data) => {
-  chatList.push(`${data}さんが入室しました。`);
+  chatList.unshift(`${data}さんが入室しました。`);
 
 }
 
 // サーバから受信した退室メッセージを受け取り画面上に表示する
 const onReceiveExit = (data) => {
-  chatList.push(`${data.userName}さんが退室しました。`)
+  chatList.unshift(`${data.userName}さんが退室しました。`)
 }
 
 // サーバから受信した投稿メッセージを画面上に表示する
 const onReceivePublish = (data) => {
-  chatList.push(`${data.userName}: ${data.content}`)
+  chatList.unshift(`${data.userName}: ${data.content}`)
 }
 // #endregion
 
@@ -143,7 +143,7 @@ const registerSocketEvent = () => {
 }
 
 .button-exit {
-  color: #000;
+  color: #fff;
   margin-top: 8px;
 }
 </style>

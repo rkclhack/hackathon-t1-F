@@ -54,4 +54,8 @@ const onEnter = () => {
   border: 1px solid #888;
   margin-bottom: 16px;
 }
+
+.button-normal {
+  color: #fff;
+}
 </style>
