@@ -20,6 +20,7 @@ const inputUserName = ref("")
 // 入室メッセージをクライアントに送信する
 const onEnter = () => {
   // ユーザー名が入力されているかチェック
+
   if (!inputUserName.value.trim()) {
     alert('入力が空です。値を入力してください。')
     return
@@ -27,6 +28,7 @@ const onEnter = () => {
 
   // 入室メッセージを送信
   socket.emit("enterEvent", inputUserName.value)
+
   // 全体で使用するnameに入力されたユーザー名を格納
   userName.value = inputUserName.value
   // チャット画面へ遷移
