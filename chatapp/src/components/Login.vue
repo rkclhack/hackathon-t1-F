@@ -32,7 +32,8 @@ const onEnter = () => {
   // 全体で使用するnameに入力されたユーザー名を格納
   userName.value = inputUserName.value
   // チャット画面へ遷移
-  router.push({ name: "chat" })
+  // router.push({ name: "chat" })
+  router.push({ name: "chat-with-sidebar" })
 }
 // #endregion
 </script>
