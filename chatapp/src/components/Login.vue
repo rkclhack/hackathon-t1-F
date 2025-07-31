@@ -40,7 +40,8 @@ const onEnter = () => {
 <template>
   <div class="page-background">
   <div class="mx-auto my-5 px-4 center-container">
-    <h1 class="text-h3 font-weight-medium">チャットアプリ</h1>
+
+    <h1 class="vamos-title font-weight-medium">Vamos!</h1>
     <div class="mt-10">
 
       <v-text-field
@@ -67,6 +68,10 @@ const onEnter = () => {
 </template>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Mrs+Sheppards&display=swap');
+</style>
+
+<style>
 html, body {
   margin: 0;
   height: 100%;
@@ -79,6 +84,12 @@ html, body {
 
 
 <style scoped>
+.vamos-title {
+  color: white;
+  font-family: "Mrs Sheppards", cursive;
+  font-size: 6rem; /* このサイズが適用されるはず */
+  text-align: center;
+}
 .page-background {
   background: #0046A2;
   height: 100vh;
@@ -91,6 +102,18 @@ html, body {
   width: 200px;
   border: 1px solid #888;
   margin-bottom: 16px;
+}
+
+.center-container {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-input {
+  background-color: transparent;
+  color: white;
 }
 
 .button-normal {
