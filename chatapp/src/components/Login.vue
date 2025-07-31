@@ -39,21 +39,82 @@ const onEnter = () => {
 </script>
 
 <template>
-  <div class="mx-auto my-5 px-4">
-    <h1 class="text-h3 font-weight-medium">Vue.js Chat サンプル</h1>
+  <div class="page-background">
+  <div class="mx-auto my-5 px-4 center-container">
+
+    <h1 class="vamos-title font-weight-medium">Vamos!</h1>
     <div class="mt-10">
-      <p>ユーザー名</p>
-      <input type="text" class="user-name-text" v-model="inputUserName" />
+
+      <v-text-field
+        v-model="inputUserName"
+        label="USERNAME"
+        prepend-inner-icon="mdi-account"
+        outlined
+        dense
+        hide-details
+        class="login-input"
+      />
     </div>
-    <button type="button" @click="onEnter" class="button-normal">入室する</button>
+    <v-btn
+        class="login-button"
+        color="white"
+        @click="onEnter"
+        block
+        elevation="2"
+      >
+        <span class="login-text">LOGIN</span>
+      </v-btn>
+  </div>
   </div>
 </template>
 
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mrs+Sheppards&display=swap');
+</style>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+#app {
+  height: 100%;
+}
+</style>
+
+
 <style scoped>
+.vamos-title {
+  color: white;
+  font-family: "Mrs Sheppards", cursive;
+  font-size: 6rem; /* このサイズが適用されるはず */
+  text-align: center;
+}
+.page-background {
+  background: #0046A2;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
 .user-name-text {
   width: 200px;
   border: 1px solid #888;
   margin-bottom: 16px;
+}
+
+.center-container {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-input {
+  background-color: transparent;
+  color: white;
 }
 
 .button-normal {
