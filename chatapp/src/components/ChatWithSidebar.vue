@@ -22,25 +22,6 @@ const roomMessages = reactive(new Map()) // roomId -> messages[]
 const currentRoom = inject("currentRoom")
 const rooms = inject("rooms")
 
-//ルーム作成
-const newRoomName = ref('')
-let new_roomCount = 0
-
-const createNew_Room = () => {
-  new_roomCount ++
-  const trimmedName = newRoomName.value.trim()
-  const name = trimmedName || `ルーム${new_roomCount}`
-  const newRoomId = `custom-room-${new_roomCount}`
-  rooms[newRoomId] = {
-    name,
-    type: 'team', // 任意のタイプ（必要に応じて変更）
-    icon: '🆕',     // 任意のアイコン
-    parent: 'soccer-club', // 親ルームにするなら設定（必要な場合のみ）
-  }
-
-  newRoomName.value = ''
-}
-
 // 現在のルームのメッセージリスト（computed的に）
 const currentRoomMessages = computed(() => {
   return roomMessages.get(currentRoom.value) || []
@@ -335,18 +316,9 @@ const getMessageContent = (message) => {
     <div class="main-content">
       <div class="mx-auto my-5 px-4">
         <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
-
-        <v-text-field
-          v-model="newRoomName"
-          label="新しいルーム名を入力"
-          outlined
-          dense
-          class="mb-2"
-        />
-        <button class="button-normal" @click="createNew_Room">ルーム作成</button>
         <div class="mt-10">
           <p>ログインユーザ：{{ userName }}さん</p>
-          <p>現在のルーム：{{ rooms[currentRoom]?.name }} ({{ currentRoom }})</p>
+          <p>現在のルーム：{{ rooms[currentRoom]?.name }}</p>
           
           <!-- チャットメッセージ表示エリア -->
           <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
