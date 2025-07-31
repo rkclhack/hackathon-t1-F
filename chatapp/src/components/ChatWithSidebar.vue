@@ -1,13 +1,11 @@
 <script setup>
 import { inject, ref, reactive, onMounted, watch, nextTick, computed } from "vue"
 import socketManager from '../socketManager.js'
-import { useRouter } from "vue-router"
 import Sidebar from "./Sidebar.vue"
 import StrategyBoard from "./StrategyBoard.vue"
 
 // #region global state
 const userName = inject("userName")
-const router = useRouter()
 // #endregion
 
 // #region local variable
@@ -169,28 +167,6 @@ const onPublish = () => {
 
   // 入力欄を初期化
   chatContent.value = ""
-}
-
-// 退室メッセージをサーバに送信する
-const onExit = () => {
-  // 現在のルームから退出
-  if (currentRoom.value) {
-    socket.emit("leaveRoom", { 
-      roomId: currentRoom.value, 
-      userName: userName.value 
-    })
-  }
-
-  // 退室メッセージを送信
-  socket.emit("exitEvent", { userName: userName.value })
-
-  // 入力欄を初期化
-  chatContent.value = ""
-
-  // チャット画面から退室する（ログのみ、メッセージには追加しない）
-  // console.log(`${userName.value}さんが退室しました。`)
-  
-  router.push({ name: 'login' })
 }
 
 const onRoomChange = (roomId) => {
@@ -407,7 +383,6 @@ const hasTimestamp = (messageObj) => {
     <div class="main-content">
       <div class="mx-auto my-5 px-4">
         <div class="mt-10">
-          <p>ログインユーザ：{{ userName }}さん</p>
           <!-- チャットメッセージ表示エリア -->
           <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
             <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
@@ -448,21 +423,8 @@ const hasTimestamp = (messageObj) => {
               </button>
             </div>
           </div>
-
-          <!-- その他のボタン -->
-          <v-container class="pa-0 mt-3">
-            <v-row dense>
-              <v-col cols="6">
-                <v-btn block color="red-darken-2" style="color: white;" @click="clearMessageHistory">履歴削除</v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
         </div>
         
-        <!-- 退室ボタン -->
-        <router-link to="/" class="link">
-          <v-btn color="grey-darken-2" style="color: white; margin-top: 16px;" @click="onExit">退室する</v-btn>
-        </router-link>
       </div>
     </div>
     <StrategyBoard 
@@ -480,8 +442,10 @@ const hasTimestamp = (messageObj) => {
 }
 
 .main-content {
+  background-color: #0046a21c;
   flex: 1;
   overflow-y: auto;
+  width: min(500px);
 }
 
 .link {
@@ -492,7 +456,6 @@ const hasTimestamp = (messageObj) => {
 .input-container {
   position: sticky;
   bottom: 0;
-  background: white;
   z-index: 10;
 }
 
@@ -546,12 +509,12 @@ const hasTimestamp = (messageObj) => {
 }
 
 .send-button-active {
-  background: #007bff !important;
+  background: #0046A2 !important;
   transform: scale(1.05);
 }
 
 .send-button:hover:not(:disabled) {
-  background: #0056b3;
+  background: #00377f;
   transform: scale(1.1);
 }
 
@@ -586,7 +549,7 @@ const hasTimestamp = (messageObj) => {
 }
 
 .message-bubble.my-message {
-  background-color: #1976d2;
+  background-color: #0046A2;
   margin-left: auto;
   margin-right: 0;
 }
@@ -615,7 +578,7 @@ const hasTimestamp = (messageObj) => {
   left: auto;
   right: -8px;
   border-right: none;
-  border-left: 8px solid #1976d2;
+  border-left: 8px solid #0046A2;
 }
 
 .message-bubble.memo-message::before {
