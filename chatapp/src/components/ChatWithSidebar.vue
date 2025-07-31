@@ -15,51 +15,37 @@ const socket = socketManager.getInstance()
 
 // #region reactive variable
 const chatContent = ref("")
+
+
 // Phase 2: ルーム別メッセージ管理
 const roomMessages = reactive(new Map()) // roomId -> messages[]
-const currentRoom = ref('soccer-club')
-const rooms = reactive({
-  'soccer-club': {
-    name: 'サッカー部全体',
-    type: 'public',
-    icon: '🏆',
-    members: ['all']
-  },
-  'team-a': {
-    name: 'Aチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    children: ['team-a-match-a', 'team-a-match-b'],
-    expanded: true
-  },
-  'team-a-match-a': {
-    name: '試合A',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-a-match-b': {
-    name: '試合B',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-b': {
-    name: 'Bチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  },
-  'team-c': {
-    name: 'Cチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
+const currentRoom = inject("currentRoom")
+const rooms = inject("rooms")
+
+//ルーム作成
+//const new_rooms = ref([])
+const newRoomName = ref('')
+let new_roomCount = 0
+
+const createNew_Room = () => {
+  new_roomCount ++
+  const trimmedName = newRoomName.value.trim()
+  const name = trimmedName || `ルーム${new_roomCount}`
+
+  /*rooms.value.push({
+    id: `${new_roomCount}`,
+    name
+  })*/
+  const newRoomId = `custom-room-${new_roomCount}`
+  rooms.value[newRoomId] = {
+    name,
+    type: 'team', // 任意のタイプ（必要に応じて変更）
+    icon: '🆕',     // 任意のアイコン
+    parent: 'soccer-club', // 親ルームにするなら設定（必要な場合のみ）
   }
-})
+
+  newRoomName.value = ''
+}
 
 // 現在のルームのメッセージリスト（computed的に）
 const currentRoomMessages = computed(() => {
@@ -297,11 +283,34 @@ const registerSocketEvent = () => {
 </script>
 
 <template>
+  <div class="pa-4">
+      <h3>ルーム一覧</h3>
+      <v-list dense>
+        <v-list-item
+          v-for="(room, index) in rooms"
+          :key="index"
+          :to="`${room.id}/`"
+          tag="router-link"
+          class="room-link"
+        >
+        {{ room.name }}
+        </v-list-item>
+      </v-list>
+  </div>
   <div class="chat-with-sidebar">
     <Sidebar @room-changed="onRoomChange" />
     <div class="main-content">
       <div class="mx-auto my-5 px-4">
         <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
+
+        <v-text-field
+          v-model="newRoomName"
+          label="新しいルーム名を入力"
+          outlined
+          dense
+          class="mb-2"
+        />
+        <button class="button-normal" @click="createNew_Room">ルーム作成</button>
         <div class="mt-10">
           <p>ログインユーザ：{{ userName }}さん</p>
           <p>現在のルーム：{{ rooms[currentRoom]?.name }} ({{ currentRoom }})</p>

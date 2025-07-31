@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { inject, ref, reactive, onMounted } from 'vue'
 
-const currentRoom = ref('soccer-club')
+const currentRoom = inject("currentRoom")
+// const rooms = inject("rooms")
 const rooms = reactive({
   'soccer-club': {
     name: 'サッカー部全体',
@@ -44,7 +45,6 @@ const rooms = reactive({
     expanded: false
   }
 })
-// #endregion
 
 // #region emits
 // 親コンポーネントに渡すイベントを定義
@@ -131,7 +131,9 @@ onMounted(() => {
         </div>
       </div>
     </div>
+    <p>{{ userName }}</p>
   </div>
+
 </template>
 
 <style scoped>

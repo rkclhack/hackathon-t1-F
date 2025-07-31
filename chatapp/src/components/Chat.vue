@@ -99,28 +99,69 @@ const registerSocketEvent = () => {
   })
 }
 // #endregion
+
+
+//サイドバーように追加
+const rooms = ref([])       // 作成されたルームの名前を格納
+let roomCount = 0           // カウントでルーム名生成
+
+const createRoom = () => {
+  roomCount++
+  rooms.value.push(`${roomCount}`)
+}
 </script>
 
 <template>
-  <div class="mx-auto my-5 px-4">
-    <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
-    <div class="mt-10">
-      <p>ログインユーザ：{{ userName }}さん</p>
-      <textarea variant="outlined" placeholder="投稿文を入力してください" rows="4" class="area" v-model="chatContent"></textarea>
-      <div class="mt-5">
-        <button class="button-normal" @click="onPublish">投稿</button>
-        <button class="button-normal util-ml-8px" @click="onMemo">メモ</button>
-      </div>
-      <div class="mt-5" v-if="chatList.length !== 0">
-        <ul>
-          <li class="item mt-4" v-for="(chat, i) in chatList" :key="i">{{ chat }}</li>
-        </ul>
-      </div>
-    </div>
-    <router-link to="/" class="link">
-      <button type="button" class="button-normal button-exit" @click="onExit">退室する</button>
-    </router-link>
-  </div>
+  <v-container>
+    <v-row>
+      <v-col cols="3">
+        <div class="pa-4">
+          <h3>ルーム一覧</h3>
+          <v-list dense>
+            <v-list-item
+              v-for="(room, index) in rooms"
+              :key="index"
+              :to="`${room}/`"
+              tag="router-link"
+              class="room-link"
+            >
+              {{ room }}
+            </v-list-item>
+          </v-list>
+        </div>
+      </v-col>
+      <v-col cols="9">
+        <v-container>
+          <div class="mx-auto my-5 px-4">
+            <v-row>
+              <v-col cols="10">
+                <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
+              </v-col>
+              <v-col cols="2">
+                <v-btn color="primary" class="button-normal" @click="createRoom">ルーム作成</v-btn>
+              </v-col>
+            </v-row>
+            <div class="mt-10">
+              <p>ログインユーザ：{{ userName }}さん</p>
+              <textarea variant="outlined" placeholder="投稿文を入力してください" rows="4" class="area" v-model="chatContent"></textarea>
+              <div class="mt-5">
+                <button class="button-normal" @click="onPublish">投稿</button>
+                <button class="button-normal util-ml-8px" @click="onMemo">メモ</button>
+              </div>
+              <div class="mt-5" v-if="chatList.length !== 0">
+                <ul>
+                  <li class="item mt-4" v-for="(chat, i) in chatList" :key="i">{{ chat }}</li>
+                </ul>
+              </div>
+            </div>
+            <router-link to="/" class="link">
+              <button type="button" class="button-normal button-exit" @click="onExit">退室する</button>
+            </router-link>
+          </div>
+        </v-container>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <style scoped>
