@@ -102,14 +102,49 @@ const saveMessagesToStorage = () => {
   }
 }
 
+// メッセージオブジェクトを作成するヘルパー関数
+const createMessageObject = (userName, content, type = 'message') => {
+  return {
+    id: Date.now() + Math.random(), // 一意のID生成
+    userName: userName,
+    content: content,
+    timestamp: new Date().toISOString(),
+    type: type // 'message', 'memo', 'system'
+  }
+}
+
 // メッセージ追加時にローカルストレージに自動保存
-const addMessageToRoom = (roomId, message) => {
+const addMessageToRoom = (roomId, messageData) => {
   const messages = roomMessages.get(roomId) || []
-  messages.push(message) // unshiftからpushに変更（最新が下に来るように）
+  
+  // 文字列の場合は旧形式なのでオブジェクトに変換
+  let messageObj
+  if (typeof messageData === 'string') {
+    // 既存の文字列メッセージを解析してオブジェクトに変換
+    if (messageData.includes('さんのメモ:')) {
+      const match = messageData.match(/^(.+)さんのメモ:\s*(.*)$/)
+      if (match) {
+        messageObj = createMessageObject(match[1], match[2], 'memo')
+      } else {
+        messageObj = createMessageObject('Unknown', messageData, 'memo')
+      }
+    } else if (messageData.includes(':')) {
+      const colonIndex = messageData.indexOf(':')
+      const userName = messageData.substring(0, colonIndex)
+      const content = messageData.substring(colonIndex + 1).trim()
+      messageObj = createMessageObject(userName, content, 'message')
+    } else {
+      messageObj = createMessageObject('System', messageData, 'system')
+    }
+  } else {
+    messageObj = messageData
+  }
+  
+  messages.push(messageObj)
   
   // 各ルーム最大200件まで保持（メモリ使用量制限）
   if (messages.length > 200) {
-    messages.shift() // spliceからshiftに変更（古いメッセージを削除）
+    messages.shift()
   }
   
   // ローカルストレージに保存
@@ -161,7 +196,8 @@ const onPublish = () => {
   socket.emit("publishEvent", { 
     userName: userName.value, 
     content: chatContent.value,
-    roomId: currentRoom.value
+    roomId: currentRoom.value,
+    timestamp: new Date().toISOString() // タイムスタンプを追加
   })
 
   // 入力欄を初期化
@@ -198,8 +234,8 @@ const onExit = () => {
 //   }
   
 //   // 現在のルームのメッセージリストにメモを追加
-//   const message = `${userName.value}さんのメモ: ${chatContent.value}`
-//   addMessageToRoom(currentRoom.value, message)
+//   const memoMessage = createMessageObject(userName.value, chatContent.value, 'memo')
+//   addMessageToRoom(currentRoom.value, memoMessage)
 
 //   // 入力欄を初期化
 //   chatContent.value = ""
@@ -227,8 +263,16 @@ const onReceiveExit = (data) => {
 // サーバから受信した投稿メッセージを画面上に表示する（ルーム対応版）
 const onReceivePublish = (data) => {
   const targetRoomId = data.roomId || currentRoom.value
-  const message = `${data.userName}: ${data.content}`
-  addMessageToRoom(targetRoomId, message)
+  const messageObj = createMessageObject(
+    data.userName, 
+    data.content, 
+    'message'
+  )
+  // サーバーからタイムスタンプが来た場合はそれを使用
+  if (data.timestamp) {
+    messageObj.timestamp = data.timestamp
+  }
+  addMessageToRoom(targetRoomId, messageObj)
 }
 
 // 新規: ルーム参加通知（ログのみ、メッセージには追加しない）
@@ -303,48 +347,82 @@ const registerSocketEvent = () => {
 }
 
 // メッセージ表示用のヘルパー関数
-const isMyMessage = (message) => {
-  // メッセージが自分のものかどうかを判定
-  if (typeof message === 'string') {
-    return message.startsWith(`${userName.value}:`) || message.includes(`${userName.value}さんのメモ:`)
+const isMyMessage = (messageObj) => {
+  if (typeof messageObj === 'object' && messageObj.userName) {
+    return messageObj.userName === userName.value
+  }
+  // 旧形式の文字列メッセージ対応
+  if (typeof messageObj === 'string') {
+    return messageObj.startsWith(`${userName.value}:`) || messageObj.includes(`${userName.value}さんのメモ:`)
   }
   return false
 }
 
-const isMemoMessage = (message) => {
-  // メッセージがメモかどうかを判定
-  if (typeof message === 'string') {
-    return message.includes('さんのメモ:')
+const isMemoMessage = (messageObj) => {
+  if (typeof messageObj === 'object' && messageObj.type) {
+    return messageObj.type === 'memo'
+  }
+  // 旧形式の文字列メッセージ対応
+  if (typeof messageObj === 'string') {
+    return messageObj.includes('さんのメモ:')
   }
   return false
 }
 
-const getMessageUser = (message) => {
-  // メッセージからユーザー名を抽出
-  if (typeof message === 'string') {
-    if (message.includes('さんのメモ:')) {
-      const match = message.match(/^(.+)さんのメモ:/)
+const getMessageUser = (messageObj) => {
+  if (typeof messageObj === 'object' && messageObj.userName) {
+    return messageObj.userName
+  }
+  // 旧形式の文字列メッセージ対応
+  if (typeof messageObj === 'string') {
+    if (messageObj.includes('さんのメモ:')) {
+      const match = messageObj.match(/^(.+)さんのメモ:/)
       return match ? match[1] : 'Unknown'
-    } else if (message.includes(':')) {
-      const parts = message.split(':')
+    } else if (messageObj.includes(':')) {
+      const parts = messageObj.split(':')
       return parts[0]
     }
   }
   return 'System'
 }
 
-const getMessageContent = (message) => {
-  // メッセージから内容を抽出
-  if (typeof message === 'string') {
-    if (message.includes('さんのメモ:')) {
-      const parts = message.split('さんのメモ:')
-      return parts.length > 1 ? parts[1].trim() : message
-    } else if (message.includes(':')) {
-      const parts = message.split(':')
+const getMessageContent = (messageObj) => {
+  if (typeof messageObj === 'object' && messageObj.content) {
+    return messageObj.content
+  }
+  // 旧形式の文字列メッセージ対応
+  if (typeof messageObj === 'string') {
+    if (messageObj.includes('さんのメモ:')) {
+      const parts = messageObj.split('さんのメモ:')
+      return parts.length > 1 ? parts[1].trim() : messageObj
+    } else if (messageObj.includes(':')) {
+      const parts = messageObj.split(':')
       return parts.slice(1).join(':').trim()
     }
   }
-  return message
+  return messageObj
+}
+
+// タイムスタンプをフォーマットする関数
+const formatTimestamp = (messageObj) => {
+  if (typeof messageObj === 'object' && messageObj.timestamp) {
+    const date = new Date(messageObj.timestamp)
+    
+    // 年月日時分を表示
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    
+    return `${year}/${month}/${day} ${hours}:${minutes}`
+  }
+  return ''
+}
+
+// メッセージにタイムスタンプがあるかチェック
+const hasTimestamp = (messageObj) => {
+  return typeof messageObj === 'object' && messageObj.timestamp
 }
 // #endregion
 </script>
@@ -370,7 +448,10 @@ const getMessageContent = (message) => {
                   'my-message': isMyMessage(message),
                   'memo-message': isMemoMessage(message)
                 }">
-                  <div class="message-header">{{ getMessageUser(message) }}</div>
+                  <div class="message-header">
+                    <span class="user-name">{{ getMessageUser(message) }}</span>
+                    <span v-if="hasTimestamp(message)" class="timestamp">{{ formatTimestamp(message) }}</span>
+                  </div>
                   <div class="message-content">{{ getMessageContent(message) }}</div>
                 </div>
               </div>
@@ -517,6 +598,22 @@ const getMessageContent = (message) => {
   font-weight: bold;
   color: #fff;
   margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-name {
+  flex: 1;
+}
+
+.timestamp {
+  font-size: 10px;
+  font-weight: normal;
+  opacity: 0.8;
+  margin-left: 8px;
+  white-space: nowrap;
+  min-width: 90px;
 }
 
 .message-content {
@@ -524,6 +621,7 @@ const getMessageContent = (message) => {
   line-height: 1.4;
   word-wrap: break-word;
   color: white;
+  white-space: pre-line;
 }
 
 /* スクロールバーのスタイル調整 */
