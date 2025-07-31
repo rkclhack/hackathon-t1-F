@@ -3,6 +3,7 @@ import { inject, ref, reactive, onMounted, watch, nextTick, computed } from "vue
 import socketManager from '../socketManager.js'
 import { useRouter } from "vue-router"
 import Sidebar from "./Sidebar.vue"
+import StrategyBoard from "./StrategyBoard.vue"
 
 // #region global state
 const userName = inject("userName")
@@ -402,6 +403,10 @@ const getMessageContent = (message) => {
         </router-link>
       </div>
     </div>
+    <StrategyBoard 
+      :currentRoom="currentRoom" 
+      :roomData="rooms[currentRoom]" 
+    />
   </div>
 </template>
 
