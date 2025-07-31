@@ -404,6 +404,21 @@ const getMessageContent = (messageObj) => {
   return messageObj
 }
 
+const deleteMessage = (messageObj) => {
+  if (confirm('このメッセージを削除しますか？')) {
+    const targetRoomId = currentRoom.value
+    const messages = roomMessages.get(targetRoomId) || []
+    
+    // メッセージを削除
+    const index = messages.findIndex(msg => msg.id === messageObj.id)
+    if (index !== -1) {
+      messages.splice(index, 1)
+      roomMessages.set(targetRoomId, messages)
+      saveMessagesToStorage() // ローカルストレージに保存
+    }
+  }
+}
+
 // タイムスタンプをフォーマットする関数
 const formatTimestamp = (messageObj) => {
   if (typeof messageObj === 'object' && messageObj.timestamp) {
@@ -443,7 +458,7 @@ const hasTimestamp = (messageObj) => {
             <h4>{{ rooms[currentRoom]?.name }} のメッセージ ({{ currentRoomMessages.length }}件):</h4>
             <p class="storage-info">※ ローカルストレージに自動保存されます</p>
             
-            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item">
+            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
               <div class="message-container">
                 <div class="message-bubble" :class="{ 
                   'my-message': isMyMessage(message),
