@@ -191,19 +191,19 @@ const onExit = () => {
 }
 
 // メモを画面上に表示する
-const onMemo = () => {
-  if (!chatContent.value) {
-    alert("メモの内容を入力してください。")
-    return
-  }
+// const onMemo = () => {
+//   if (!chatContent.value) {
+//     alert("メモの内容を入力してください。")
+//     return
+//   }
   
-  // 現在のルームのメッセージリストにメモを追加
-  const message = `${userName.value}さんのメモ: ${chatContent.value}`
-  addMessageToRoom(currentRoom.value, message)
+//   // 現在のルームのメッセージリストにメモを追加
+//   const message = `${userName.value}さんのメモ: ${chatContent.value}`
+//   addMessageToRoom(currentRoom.value, message)
 
-  // 入力欄を初期化
-  chatContent.value = ""
-}
+//   // 入力欄を初期化
+//   chatContent.value = ""
+// }
 
 const onRoomChange = (roomId) => {
   currentRoom.value = roomId
@@ -386,9 +386,9 @@ const getMessageContent = (message) => {
               <v-col cols="4">
                 <v-btn block color="blue-darken-4" style="color: white;" @click="onPublish">投稿</v-btn>
               </v-col>
-              <v-col cols="4">
+              <!-- <v-col cols="4">
                 <v-btn block color="orange-darken-2" style="color: white;" @click="onMemo">メモ</v-btn>
-              </v-col>
+              </v-col> -->
               <v-col cols="4">
                 <v-btn block color="red-darken-2" style="color: white;" @click="clearMessageHistory">履歴削除</v-btn>
               </v-col>
