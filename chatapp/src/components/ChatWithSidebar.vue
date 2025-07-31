@@ -16,51 +16,12 @@ const socket = socketManager.getInstance()
 
 // #region reactive variable
 const chatContent = ref("")
+
+
 // Phase 2: ルーム別メッセージ管理
 const roomMessages = reactive(new Map()) // roomId -> messages[]
-const currentRoom = ref('soccer-club')
-const rooms = reactive({
-  'soccer-club': {
-    name: 'サッカー部全体',
-    type: 'public',
-    icon: '🏆',
-    members: ['all']
-  },
-  'team-a': {
-    name: 'Aチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    children: ['team-a-match-a', 'team-a-match-b'],
-    expanded: true
-  },
-  'team-a-match-a': {
-    name: '試合A',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-a-match-b': {
-    name: '試合B',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-b': {
-    name: 'Bチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  },
-  'team-c': {
-    name: 'Cチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  }
-})
+const currentRoom = inject("currentRoom")
+const rooms = inject("rooms")
 
 // 現在のルームのメッセージリスト（computed的に）
 const currentRoomMessages = computed(() => {
@@ -436,7 +397,7 @@ const hasTimestamp = (messageObj) => {
         <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
         <div class="mt-10">
           <p>ログインユーザ：{{ userName }}さん</p>
-          <p>現在のルーム：{{ rooms[currentRoom]?.name }} ({{ currentRoom }})</p>
+          <p>現在のルーム：{{ rooms[currentRoom]?.name }}</p>
           
           <!-- チャットメッセージ表示エリア -->
           <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
