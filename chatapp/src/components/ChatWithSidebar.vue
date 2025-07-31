@@ -23,7 +23,6 @@ const currentRoom = inject("currentRoom")
 const rooms = inject("rooms")
 
 //ルーム作成
-//const new_rooms = ref([])
 const newRoomName = ref('')
 let new_roomCount = 0
 
@@ -31,13 +30,8 @@ const createNew_Room = () => {
   new_roomCount ++
   const trimmedName = newRoomName.value.trim()
   const name = trimmedName || `ルーム${new_roomCount}`
-
-  /*rooms.value.push({
-    id: `${new_roomCount}`,
-    name
-  })*/
   const newRoomId = `custom-room-${new_roomCount}`
-  rooms.value[newRoomId] = {
+  rooms[newRoomId] = {
     name,
     type: 'team', // 任意のタイプ（必要に応じて変更）
     icon: '🆕',     // 任意のアイコン
@@ -283,20 +277,6 @@ const registerSocketEvent = () => {
 </script>
 
 <template>
-  <div class="pa-4">
-      <h3>ルーム一覧</h3>
-      <v-list dense>
-        <v-list-item
-          v-for="(room, index) in rooms"
-          :key="index"
-          :to="`${room.id}/`"
-          tag="router-link"
-          class="room-link"
-        >
-        {{ room.name }}
-        </v-list-item>
-      </v-list>
-  </div>
   <div class="chat-with-sidebar">
     <Sidebar @room-changed="onRoomChange" />
     <div class="main-content">

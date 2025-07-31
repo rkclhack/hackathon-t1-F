@@ -1,5 +1,5 @@
 <script setup>
-import { provide, ref } from "vue"
+import { provide, ref, reactive } from "vue"
 
 // #region reactive state
 const userName = ref("")
@@ -12,7 +12,7 @@ provide("userName", userName)
 
 //ルーム用の配列
 const currentRoom = ref('soccer-club')
-const rooms = ref({
+const rooms = reactive({
   'soccer-club': {
     name: 'サッカー部全体',
     type: 'public',
