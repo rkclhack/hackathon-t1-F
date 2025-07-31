@@ -1,55 +1,63 @@
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { inject, ref, reactive, onMounted, nextTick } from 'vue'
 
-const currentRoom = ref('soccer-club')
-const rooms = reactive({
-  'soccer-club': {
-    name: 'サッカー部全体',
-    type: 'public',
-    icon: '🏆',
-    members: ['all']
-  },
-  'team-a': {
-    name: 'Aチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    children: ['team-a-match-a', 'team-a-match-b'],
-    expanded: true
-  },
-  'team-a-match-a': {
-    name: '試合A',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-a-match-b': {
-    name: '試合B',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-b': {
-    name: 'Bチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  },
-  'team-c': {
-    name: 'Cチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  }
-})
-// #endregion
+const currentRoom = inject("currentRoom")
+const rooms = inject("rooms")
 
 // #region emits
 // 親コンポーネントに渡すイベントを定義
 const emit = defineEmits(['room-changed'])
 // #endregion
+
+//ルーム作成
+const newRoomName = ref('')
+let new_roomCount = Object.keys(rooms).length; // 既存ルーム数をカウント
+
+const createNew_Room = (name) => {
+  new_roomCount ++
+  const newRoomId = `custom-room-${new_roomCount}`
+  rooms[newRoomId] = {
+    name,
+    type: 'team', // 任意のタイプ（必要に応じて変更）
+    icon: '📁',     // 任意のアイコン
+    parent: 'soccer-club', // 親ルームにするなら設定（必要な場合のみ）
+  }
+
+  newRoomName.value = ''
+}
+
+// 状態
+const isEditing = ref(false)
+const newRoom = ref('')
+const placeholderText = 'ルーム作成'
+
+// refs
+const inputRef = ref(null)
+
+// 外部または親コンポーネントから受け取る rooms, appendRoom()
+
+// 編集開始
+function startEdit() {
+  isEditing.value = true
+  newRoom.value = ''
+  nextTick(() => {
+    inputRef.value?.focus()
+  })
+}
+
+// 入力確定時
+function handleConfirm() {
+  const name = newRoom.value.trim()
+  if (name) {
+    createNew_Room(name) // ← ここで使う！
+  }
+  isEditing.value = false
+}
+
+// 編集キャンセル（フォーカス外し）
+function cancelEdit() {
+  isEditing.value = false
+}
 
 // #region methods
 const selectRoom = (roomId) => {
@@ -130,8 +138,22 @@ onMounted(() => {
           </div>
         </div>
       </div>
+
+
+      <div v-if="isEditing" class="room-item team-level">
+        <input
+          v-model="newRoom"
+          @keyup.enter="handleConfirm"
+          @blur="cancelEdit"
+          ref="inputRef"
+        />
+      </div>
+      <div class="room-item team-level" v-else @click="startEdit">
+        {{ placeholderText }}
+      </div>
     </div>
   </div>
+
 </template>
 
 <style scoped>

@@ -98,6 +98,16 @@ const registerSocketEvent = () => {
   })
 }
 // #endregion
+
+
+//サイドバーように追加
+const rooms = ref([])       // 作成されたルームの名前を格納
+let roomCount = 0           // カウントでルーム名生成
+
+const createRoom = () => {
+  roomCount++
+  rooms.value.push(`${roomCount}`)
+}
 </script>
 
 <template>

@@ -16,51 +16,12 @@ const socket = socketManager.getInstance()
 
 // #region reactive variable
 const chatContent = ref("")
+
+
 // Phase 2: ルーム別メッセージ管理
 const roomMessages = reactive(new Map()) // roomId -> messages[]
-const currentRoom = ref('soccer-club')
-const rooms = reactive({
-  'soccer-club': {
-    name: 'サッカー部全体',
-    type: 'public',
-    icon: '🏆',
-    members: ['all']
-  },
-  'team-a': {
-    name: 'Aチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    children: ['team-a-match-a', 'team-a-match-b'],
-    expanded: true
-  },
-  'team-a-match-a': {
-    name: '試合A',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-a-match-b': {
-    name: '試合B',
-    type: 'match',
-    icon: '🥅',
-    parent: 'team-a'
-  },
-  'team-b': {
-    name: 'Bチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  },
-  'team-c': {
-    name: 'Cチーム',
-    type: 'team',
-    icon: '📁',
-    parent: 'soccer-club',
-    expanded: false
-  }
-})
+const currentRoom = inject("currentRoom")
+const rooms = inject("rooms")
 
 // 現在のルームのメッセージリスト（computed的に）
 const currentRoomMessages = computed(() => {
@@ -388,6 +349,21 @@ const getMessageContent = (messageObj) => {
   return messageObj
 }
 
+const deleteMessage = (messageObj) => {
+  if (confirm('このメッセージを削除しますか？')) {
+    const targetRoomId = currentRoom.value
+    const messages = roomMessages.get(targetRoomId) || []
+    
+    // メッセージを削除
+    const index = messages.findIndex(msg => msg.id === messageObj.id)
+    if (index !== -1) {
+      messages.splice(index, 1)
+      roomMessages.set(targetRoomId, messages)
+      saveMessagesToStorage() // ローカルストレージに保存
+    }
+  }
+}
+
 // タイムスタンプをフォーマットする関数
 const formatTimestamp = (messageObj) => {
   if (typeof messageObj === 'object' && messageObj.timestamp) {
@@ -419,8 +395,8 @@ const hasTimestamp = (messageObj) => {
       <div class="mx-auto my-5 px-4">
         <div class="mt-10">
           <!-- チャットメッセージ表示エリア -->
-          <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
-            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item">
+          <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">            
+            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
               <div class="message-container">
                 <div class="message-bubble" :class="{ 
                   'my-message': isMyMessage(message),
