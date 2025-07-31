@@ -394,8 +394,9 @@ const hasTimestamp = (messageObj) => {
     <div class="main-content">
       <div class="mx-auto my-5 px-4">
         <div class="mt-10">
+          <p>ログインユーザ：{{ userName }}さん</p>
           <!-- チャットメッセージ表示エリア -->
-          <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">            
+          <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
             <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
               <div class="message-container">
                 <div class="message-bubble" :class="{ 
