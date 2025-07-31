@@ -1,5 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import socketManager from '../socketManager.js'
 
 const props = defineProps({
   currentRoom: {
@@ -11,6 +12,11 @@ const props = defineProps({
     required: true
   }
 })
+
+const emit = defineEmits(['strategy-updated'])
+
+// Socket.IO接続
+const socket = socketManager.getInstance()
 
 // 編集モード管理
 const isEditMode = ref(false)
@@ -45,14 +51,63 @@ const saveEdit = () => {
   savedData[props.currentRoom] = strategyText.value
   localStorage.setItem('strategyData', JSON.stringify(savedData))
   
-  // roomDataを更新（これは理想的にはemitで親コンポーネントに通知すべき）
+  // roomDataを更新
   if (props.roomData) {
     props.roomData.strategy = strategyText.value
   }
   
+  // Socket.IOで他のユーザーに戦略更新を通知
+  socket.emit('strategyUpdate', {
+    roomId: props.currentRoom,
+    strategy: strategyText.value,
+    timestamp: new Date().toISOString()
+  })
+  
   isEditMode.value = false
   alert('保存しました')
 }
+
+// Socket.IOイベントハンドラー
+const onStrategyUpdate = (data) => {
+  // 自分が編集中でない場合のみ更新
+  if (!isEditMode.value && data.roomId === props.currentRoom) {
+    // ローカルストレージを更新
+    const savedData = JSON.parse(localStorage.getItem('strategyData') || '{}')
+    savedData[data.roomId] = data.strategy
+    localStorage.setItem('strategyData', JSON.stringify(savedData))
+    
+    // roomDataを更新
+    if (props.roomData) {
+      props.roomData.strategy = data.strategy
+    }
+    
+    // 親コンポーネントに通知
+    emit('strategy-updated', {
+      roomId: data.roomId,
+      strategy: data.strategy
+    })
+  }
+}
+
+// Socket.IOイベント登録
+const registerSocketEvents = () => {
+  socket.on('strategyUpdate', onStrategyUpdate)
+}
+
+// Socket.IOイベント削除
+const unregisterSocketEvents = () => {
+  socket.off('strategyUpdate', onStrategyUpdate)
+}
+
+// ライフサイクル
+onMounted(() => {
+  registerSocketEvents()
+  loadStoredData()
+})
+
+onUnmounted(() => {
+  unregisterSocketEvents()
+})
 
 // コンポーネント初期化時にローカルストレージからデータを読み込み
 const loadStoredData = () => {
@@ -61,9 +116,6 @@ const loadStoredData = () => {
     props.roomData.strategy = savedData[props.currentRoom]
   }
 }
-
-// 初期化
-loadStoredData()
 </script>
 
 <template>
@@ -127,7 +179,7 @@ loadStoredData()
 
 <style scoped>
 .strategy-board {
-  width: 500px;
+  width: 400px;
   height: 100vh;
   background-color: #f8f9fa;
   border-left: 1px solid #e0e0e0;
