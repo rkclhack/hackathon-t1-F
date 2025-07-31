@@ -67,6 +67,19 @@ export default (io, socket) => {
     leaveRoom(socket, roomId, userName)
   })
 
+  // 新規: 戦略更新イベント
+  socket.on('strategyUpdate', (data) => {
+    const { roomId, strategy, timestamp } = data
+    console.log(`戦略が更新されました - ルーム: ${roomId}`)
+
+    // 現在のルーム内の他のユーザーに戦略更新を通知
+    socket.to(roomId).emit('strategyUpdate', {
+      roomId,
+      strategy,
+      timestamp
+    })
+  })
+
   // 接続終了時の処理
   socket.on('disconnect', () => {
     console.log('ユーザーが切断しました:', socket.id)

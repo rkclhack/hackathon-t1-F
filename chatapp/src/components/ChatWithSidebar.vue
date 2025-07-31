@@ -197,6 +197,13 @@ const onRoomChange = (roomId) => {
   currentRoom.value = roomId
   // console.log(`ルーム切り替え: ${rooms[roomId]?.name}`)
 }
+
+// 戦略更新イベントハンドラー
+const onStrategyUpdated = (data) => {
+  if (rooms[data.roomId]) {
+    rooms[data.roomId].strategy = data.strategy
+  }
+}
 // #endregion
 
 // #region socket event handler
@@ -461,6 +468,7 @@ const hasTimestamp = (messageObj) => {
     <StrategyBoard 
       :currentRoom="currentRoom" 
       :roomData="rooms[currentRoom]" 
+      @strategy-updated="onStrategyUpdated"
     />
   </div>
 </template>
