@@ -77,7 +77,13 @@ const createMessageObject = (userName, content, type = 'message') => {
 
 // メッセージ追加時にローカルストレージに自動保存
 const addMessageToRoom = (roomId, messageData) => {
-  const messages = roomMessages.get(roomId) || []
+  
+  // カスタムルームなど未初期化のルームに対応
+  if (!roomMessages.has(roomId)) {
+    roomMessages.set(roomId, [])
+  }
+
+  const messages = roomMessages.get(roomId)
   
   // 文字列の場合は旧形式なのでオブジェクトに変換
   let messageObj
