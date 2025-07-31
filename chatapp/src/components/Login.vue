@@ -42,9 +42,10 @@ const onEnter = () => {
   <div class="page-background">
   <div class="mx-auto my-5 px-4 center-container">
 
+    <img src="/public/soccer-ball.png" alt="Vamos Logo" class="ball-logo" />
     <h1 class="vamos-title font-weight-medium">Vamos!</h1>
     <div class="mt-10">
-
+      <!-- 画像挿入 -->
       <v-text-field
         v-model="inputUserName"
         label="USERNAME"
@@ -86,9 +87,11 @@ html, body {
 
 <style scoped>
 .vamos-title {
+  position: relative;
+  z-index: 2;
   color: white;
   font-family: "Mrs Sheppards", cursive;
-  font-size: 6rem; /* このサイズが適用されるはず */
+  font-size: 8rem; /* このサイズが適用されるはず */
   text-align: center;
 }
 .page-background {
@@ -106,10 +109,21 @@ html, body {
 }
 
 .center-container {
-  width: 300px;
+  position: relative;
+  width: 400px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.ball-logo {
+  width: 60px;
+  height: 60px;
+  display: block;
+  position: absolute;
+  z-index: 5;
+  top: 83px;
+  left: 227px;
 }
 
 .login-input {
