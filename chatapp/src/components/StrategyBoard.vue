@@ -76,7 +76,7 @@ loadStoredData()
       <!-- 編集ボタン -->
       <div class="edit-controls">
         <v-btn 
-          v-if="!isEditMode" 
+          v-if="!isEditMode && currentStrategy" 
           size="small" 
           color="primary" 
           @click="startEdit"
