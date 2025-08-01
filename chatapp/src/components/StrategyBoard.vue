@@ -130,7 +130,7 @@ const loadStoredData = () => {
         <v-btn 
           v-if="!isEditMode && currentStrategy" 
           size="small" 
-          color="primary" 
+          class="btn-new-strategy"
           @click="startEdit"
         >
           編集
@@ -167,7 +167,7 @@ const loadStoredData = () => {
         <div v-else class="no-strategy">
           <div class="text-center">
             <p class="mb-4">まだ作戦データがありません</p>
-            <v-btn color="primary" @click="startEdit">
+            <v-btn @click="startEdit" class="btn-new-strategy">
               新規作成
             </v-btn>
           </div>
@@ -178,6 +178,13 @@ const loadStoredData = () => {
 </template>
 
 <style scoped>
+.btn-new-strategy {
+    background: #0046A2;
+    color: white;
+}
+.strategy-text {
+    white-space: pre-wrap;
+}
 .strategy-board {
   width: 400px;
   height: 100vh;
@@ -212,7 +219,7 @@ const loadStoredData = () => {
 
 .position-label {
   font-weight: 600;
-  color: #1976d2;
+  color: #0046A2;
   min-width: 30px;
   display: inline-block;
 }
