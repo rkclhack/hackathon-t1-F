@@ -1,6 +1,12 @@
 // ルーム管理用のマップ
 const roomUsers = new Map() // roomId -> Set(userIds)
 const userRooms = new Map() // userId -> roomId
+const messageOwners = new Map() // messageId -> { userId, userName, roomId }
+
+// UUIDを生成する関数（簡易版）
+function generateMessageId() {
+  return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9)
+}
 
 let rooms = {
   'soccer-club': {
@@ -76,19 +82,28 @@ export default (io, socket) => {
     // 現在のルームにのみメッセージを送信
     const currentRoom = userRooms.get(socket.id)
     if (currentRoom) {
-      // ルーム内の全員にメッセージを送信
-      socket.to(currentRoom).emit('publishEvent', {
-        ...data,
-        roomId: currentRoom,
-        timestamp: new Date().toISOString()
+      // メッセージIDを生成
+      const messageId = generateMessageId()
+
+      // メッセージ所有者情報を保存
+      messageOwners.set(messageId, {
+        userId: socket.id,
+        userName: data.userName,
+        roomId: currentRoom
       })
 
-      // 送信者にも確認メッセージを送信
-      socket.emit('publishEvent', {
+      const messageData = {
         ...data,
+        id: messageId,
         roomId: currentRoom,
         timestamp: new Date().toISOString()
-      })
+      }
+
+      // ルーム内の全員にメッセージを送信
+      socket.to(currentRoom).emit('publishEvent', messageData)
+
+      // 送信者にも確認メッセージを送信
+      socket.emit('publishEvent', messageData)
     }
   })
 
@@ -125,6 +140,34 @@ export default (io, socket) => {
     })
   })
 
+  // 新規: メッセージ削除イベント
+  socket.on('deleteMessage', (data) => {
+    const { roomId, messageId, userName } = data
+    console.log(`メッセージ削除要求 - ルーム: ${roomId}, メッセージID: ${messageId}, ユーザー: ${userName}`)
+
+    // メッセージの所有者情報を確認
+    const messageOwner = messageOwners.get(messageId)
+    if (messageOwner && messageOwner.userId === socket.id && messageOwner.userName === userName) {
+      // 削除権限がある場合、ルーム内の全員に削除を通知
+      io.to(roomId).emit('deleteMessage', {
+        roomId,
+        messageId
+      })
+
+      // メッセージ所有者情報を削除
+      messageOwners.delete(messageId)
+
+      console.log(`メッセージが正常に削除されました: ${messageId}`)
+    } else {
+      console.log(`削除権限がありません - ユーザー: ${userName}, メッセージID: ${messageId}`)
+      // 削除失敗を送信者に通知（オプション）
+      socket.emit('deleteMessageError', {
+        messageId,
+        error: '削除権限がありません'
+      })
+    }
+  })
+
   // 接続終了時の処理
   socket.on('disconnect', () => {
     console.log('ユーザーが切断しました:', socket.id)
@@ -132,6 +175,13 @@ export default (io, socket) => {
     const currentRoom = userRooms.get(socket.id)
     if (currentRoom) {
       leaveRoom(socket, currentRoom, 'Unknown User')
+    }
+
+    // このユーザーが所有していたメッセージ情報を削除
+    for (const [messageId, owner] of messageOwners.entries()) {
+      if (owner.userId === socket.id) {
+        messageOwners.delete(messageId)
+      }
     }
   })
 
