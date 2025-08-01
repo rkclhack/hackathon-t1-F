@@ -23,7 +23,8 @@ const rooms = inject("rooms")
 
 // 現在のルームのメッセージリスト（computed的に）
 const currentRoomMessages = computed(() => {
-  return roomMessages.get(currentRoom.value) || []
+  const messages = roomMessages.get(currentRoom.value) || []
+  return messages
 })
 
 // #region localStorage
@@ -40,7 +41,6 @@ const loadMessagesFromStorage = () => {
           roomMessages.set(roomId, messages)
         }
       })
-      console.log('ローカルストレージからメッセージ履歴を復元しました')
     }
   } catch (error) {
     console.error('ローカルストレージからの読み込みに失敗:', error)
@@ -56,9 +56,30 @@ const saveMessagesToStorage = () => {
       dataToStore[roomId] = messages.slice(0, 100)
     })
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore))
-    console.log('ローカルストレージにメッセージ履歴を保存しました')
   } catch (error) {
     console.error('ローカルストレージへの保存に失敗:', error)
+  }
+}
+
+// 特定のルームのメッセージをローカルストレージから読み込む
+const loadRoomMessagesFromStorage = (roomId) => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const allRoomMessages = JSON.parse(stored)
+      if (allRoomMessages[roomId] && Array.isArray(allRoomMessages[roomId])) {
+        roomMessages.set(roomId, allRoomMessages[roomId])
+      } else {
+        // 該当ルームのメッセージが存在しない場合、空配列で初期化
+        roomMessages.set(roomId, [])
+      }
+    } else {
+      // ローカルストレージにデータがない場合
+      roomMessages.set(roomId, [])
+    }
+  } catch (error) {
+    console.error(`ルーム ${roomId} のメッセージ読み込みに失敗:`, error)
+    roomMessages.set(roomId, [])
   }
 }
 
@@ -136,6 +157,9 @@ onMounted(() => {
   // ローカルストレージからメッセージ履歴を復元
   loadMessagesFromStorage()
   
+  // 現在のルームのメッセージを確実に読み込み
+  loadRoomMessagesFromStorage(currentRoom.value)
+  
   registerSocketEvent()
   
   // 初期ルームに参加
@@ -145,6 +169,18 @@ onMounted(() => {
 // ルーム変更を監視してSocket.IOルームを切り替え
 watch(currentRoom, (newRoomId, oldRoomId) => {
   if (newRoomId !== oldRoomId) {
+    // 新しいルームのメッセージをローカルストレージから読み込み
+    loadRoomMessagesFromStorage(newRoomId)
+    
+    // メッセージ表示後にスクロールを調整
+    nextTick(() => {
+      const chatArea = document.querySelector('.chat-area')
+      if (chatArea) {
+        chatArea.scrollTop = chatArea.scrollHeight
+      }
+    })
+    
+    // Socket.IOルームを切り替え
     switchRoom(oldRoomId, newRoomId)
   }
 })

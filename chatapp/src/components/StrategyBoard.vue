@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import socketManager from '../socketManager.js'
 
 const props = defineProps({
@@ -26,6 +26,37 @@ const strategyText = ref('')
 const currentStrategy = computed(() => {
   return props.roomData?.strategy || ''
 })
+
+// コンポーネント初期化時にローカルストレージからデータを読み込み
+const loadStoredData = () => {
+  try {
+    const savedData = JSON.parse(localStorage.getItem('strategyData') || '{}')
+    if (savedData[props.currentRoom] && props.roomData) {
+      props.roomData.strategy = savedData[props.currentRoom]
+    } else {
+      // 該当ルームの戦略データがない場合は空文字で初期化
+      if (props.roomData) {
+        props.roomData.strategy = ''
+      }
+    }
+  } catch (error) {
+    console.error('戦略データの読み込みに失敗:', error)
+    if (props.roomData) {
+      props.roomData.strategy = ''
+    }
+  }
+}
+
+// propsの変更を監視してローカルストレージから読み込み
+watch(() => props.currentRoom, (newRoomId, oldRoomId) => {
+  if (newRoomId !== oldRoomId) {
+    loadStoredData()
+    // 編集モードの場合はキャンセル
+    if (isEditMode.value) {
+      cancelEdit()
+    }
+  }
+}, { immediate: true })
 
 // 戦略テキストを初期化
 const initStrategyText = () => {
@@ -108,14 +139,6 @@ onMounted(() => {
 onUnmounted(() => {
   unregisterSocketEvents()
 })
-
-// コンポーネント初期化時にローカルストレージからデータを読み込み
-const loadStoredData = () => {
-  const savedData = JSON.parse(localStorage.getItem('strategyData') || '{}')
-  if (savedData[props.currentRoom] && props.roomData) {
-    props.roomData.strategy = savedData[props.currentRoom]
-  }
-}
 </script>
 
 <template>
