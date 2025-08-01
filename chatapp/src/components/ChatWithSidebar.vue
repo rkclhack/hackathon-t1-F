@@ -157,12 +157,12 @@ const onPublish = () => {
     return // 空文字や空白のみの場合は送信しない
   }
 
-  // 現在のルームに投稿メッセージを送信
+  // サーバー側でIDを生成させるため、IDは含めない
   socket.emit("publishEvent", { 
     userName: userName.value, 
     content: chatContent.value,
     roomId: currentRoom.value,
-    timestamp: new Date().toISOString() // タイムスタンプを追加
+    timestamp: new Date().toISOString()
   })
 
   // 入力欄を初期化
@@ -198,14 +198,12 @@ const onReceiveExit = (data) => {
 // サーバから受信した投稿メッセージを画面上に表示する（ルーム対応版）
 const onReceivePublish = (data) => {
   const targetRoomId = data.roomId || currentRoom.value
-  const messageObj = createMessageObject(
-    data.userName, 
-    data.content, 
-    'message'
-  )
-  // サーバーからタイムスタンプが来た場合はそれを使用
-  if (data.timestamp) {
-    messageObj.timestamp = data.timestamp
+  const messageObj = {
+    id: data.id, // サーバーから送られてくるIDを使用
+    userName: data.userName,
+    content: data.content,
+    timestamp: data.timestamp || new Date().toISOString(),
+    type: 'message'
   }
   addMessageToRoom(targetRoomId, messageObj)
 }
@@ -266,6 +264,11 @@ const onReceiveDeleteMessage = (data) => {
   }
 }
 
+// メッセージ削除エラーハンドラー
+const onDeleteMessageError = (data) => {
+  alert(`メッセージの削除に失敗しました: ${data.error}`)
+}
+
 // イベント登録をまとめる（Phase 2拡張版）
 const registerSocketEvent = () => {
   // 既存イベント
@@ -280,6 +283,7 @@ const registerSocketEvent = () => {
 
   // メッセージ削除イベント
   socket.on("deleteMessage", onReceiveDeleteMessage)
+  socket.on("deleteMessageError", onDeleteMessageError)
 }
 
 // メッセージ表示用のヘルパー関数
@@ -339,19 +343,21 @@ const getMessageContent = (messageObj) => {
   return messageObj
 }
 
+// 削除権限をチェックする関数
+const canDeleteMessage = (messageObj) => {
+  // 自分のメッセージかつIDが存在する場合のみ削除可能
+  return isMyMessage(messageObj) && (typeof messageObj === 'object' && messageObj.id)
+}
+
 const deleteMessage = (messageObj) => {
   if (confirm('このメッセージを削除しますか？')) {
-    const targetRoomId = currentRoom.value
-    const messages = roomMessages.get(targetRoomId) || []
-    
-    // メッセージを削除
-    const index = messages.findIndex(msg => msg.id === messageObj.id)
-    if (index !== -1) {
-      messages.splice(index, 1)
-      roomMessages.set(targetRoomId, messages)
-      saveMessagesToStorage() // ローカルストレージに保存
-      socket.emit("deleteMessage", { roomId: targetRoomId, messageId: messageObj.id })
-    }
+    // サーバーに削除要求を送信（ローカル削除は行わない）
+    socket.emit("deleteMessage", { 
+      roomId: currentRoom.value, 
+      messageId: messageObj.id,
+      userName: userName.value // 削除権限確認用
+    })
+    // ローカル削除はonReceiveDeleteMessageで実行される
   }
 }
 
@@ -387,7 +393,7 @@ const hasTimestamp = (messageObj) => {
         <div class="mt-10">
           <!-- チャットメッセージ表示エリア -->
           <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
-            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
+            <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="canDeleteMessage(message) ? deleteMessage(message) : null">
               <div class="message-container">
                 <div class="message-bubble" :class="{ 
                   'my-message': isMyMessage(message),
