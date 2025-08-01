@@ -80,6 +80,17 @@ export default (io, socket) => {
     })
   })
 
+  // 新規: メッセージ削除イベント
+  socket.on('deleteMessage', (data) => {
+    const { roomId, messageId } = data
+    console.log(`メッセージ削除要求 - ルーム: ${roomId}, メッセージID: ${messageId}`)
+    // 現在のルーム内の他のユーザーにメッセージ削除を通知
+    socket.to(roomId).emit('deleteMessage', {
+      roomId,
+      messageId
+    })
+  })
+
   // 接続終了時の処理
   socket.on('disconnect', () => {
     console.log('ユーザーが切断しました:', socket.id)

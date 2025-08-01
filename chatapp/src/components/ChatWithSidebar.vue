@@ -252,19 +252,17 @@ const joinRoom = (roomId) => {
   })
 }
 
-// ローカルストレージクリア機能
-const clearMessageHistory = () => {
-  if (confirm('全ルームのメッセージ履歴を削除しますか？')) {
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-      Object.keys(rooms).forEach(roomId => {
-        roomMessages.set(roomId, [])
-      })
-      alert('メッセージ履歴を削除しました')
-    } catch (error) {
-      console.error('履歴削除に失敗:', error)
-      alert('履歴削除に失敗しました')
-    }
+// メッセージ削除イベントハンドラー
+const onReceiveDeleteMessage = (data) => {
+  const targetRoomId = data.roomId || currentRoom.value
+  const messages = roomMessages.get(targetRoomId) || []
+  
+  // メッセージIDで削除
+  const index = messages.findIndex(msg => msg.id === data.messageId)
+  if (index !== -1) {
+    messages.splice(index, 1)
+    roomMessages.set(targetRoomId, messages)
+    saveMessagesToStorage() // ローカルストレージに保存
   }
 }
 
@@ -279,6 +277,9 @@ const registerSocketEvent = () => {
   socket.on("userJoinedRoom", onUserJoinedRoom)
   socket.on("userLeftRoom", onUserLeftRoom)
   socket.on("joinedRoom", onJoinedRoom)
+
+  // メッセージ削除イベント
+  socket.on("deleteMessage", onReceiveDeleteMessage)
 }
 
 // メッセージ表示用のヘルパー関数
@@ -349,6 +350,7 @@ const deleteMessage = (messageObj) => {
       messages.splice(index, 1)
       roomMessages.set(targetRoomId, messages)
       saveMessagesToStorage() // ローカルストレージに保存
+      socket.emit("deleteMessage", { roomId: targetRoomId, messageId: messageObj.id })
     }
   }
 }
