@@ -1,5 +1,6 @@
 <script setup>
 import { inject, ref, reactive, onMounted, nextTick } from 'vue'
+import socketManager from '../socketManager.js'
 
 const currentRoom = inject("currentRoom")
 const rooms = inject("rooms")
@@ -10,22 +11,27 @@ const userName = inject("userName")
 const emit = defineEmits(['room-changed'])
 // #endregion
 
-//ルーム作成
-const newRoomName = ref('')
-let new_roomCount = Object.keys(rooms).length; // 既存ルーム数をカウント
+// #region local variable
+const socket = socketManager.getInstance()
+// #endregion
 
-const createNew_Room = (name) => {
-  new_roomCount ++
-  const newRoomId = `custom-room-${new_roomCount}`
-  rooms[newRoomId] = {
-    name,
-    type: 'team', // 任意のタイプ（必要に応じて変更）
-    icon: '📁',     // 任意のアイコン
-    parent: 'soccer-club', // 親ルームにするなら設定（必要な場合のみ）
-  }
+socket.on("onNewRoom", (data) => {
+  // rooms = data ではなく、プロパティごとに更新
+  Object.keys(rooms).forEach(key => delete rooms[key])
+  Object.entries(data).forEach(([key, value]) => {
+    rooms[key] = value
+  })
+  console.log("Received new rooms:", rooms)
+})
 
-  newRoomName.value = ''
-}
+socket.on("fetchServerRooms", (data) => {
+  // rooms = data ではなく、プロパティごとに更新
+  Object.keys(rooms).forEach(key => delete rooms[key])
+  Object.entries(data).forEach(([key, value]) => {
+    rooms[key] = value
+  })
+  console.log("Fetched server rooms:", rooms)
+})
 
 // 状態
 const isEditing = ref(false)
@@ -40,6 +46,7 @@ const inputRef = ref(null)
 // 編集開始
 function startEdit() {
   isEditing.value = true
+  console.log('startEdit called') // 追加
   newRoom.value = ''
   nextTick(() => {
     inputRef.value?.focus()
@@ -50,13 +57,15 @@ function startEdit() {
 function handleConfirm() {
   const name = newRoom.value.trim()
   if (name) {
-    createNew_Room(name) // ← ここで使う！
+    // createNew_Room(name) // ← ここで使う！
+    socket.emit("EmitNewRoom",{name:name})
   }
   isEditing.value = false
 }
 
 // 編集キャンセル（フォーカス外し）
 function cancelEdit() {
+  console.log('cancelEdit called') // 追加
   isEditing.value = false
 }
 
@@ -86,6 +95,7 @@ const toggleExpand = (roomId) => {
 // #region lifecycle
 onMounted(() => {
   emit('room-changed', currentRoom.value)
+  socket.emit("fetchRooms", "")
 })
 // #endregion
 
@@ -169,6 +179,7 @@ const onExit = () => {
           @keyup.enter="handleConfirm"
           @blur="cancelEdit"
           ref="inputRef"
+          style="width: 100%;"
         />
       </div>
       <div class="room-item team-level" v-else @click="startEdit">

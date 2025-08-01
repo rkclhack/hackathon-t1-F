@@ -54,6 +54,7 @@ const rooms = reactive({
     expanded: false
   }
 })
+// const rooms = reactive({})
 
 provide("currentRoom", currentRoom)
 provide("rooms", rooms)
