@@ -70,9 +70,28 @@ function cancelEdit() {
 }
 
 // #region methods
+
+// 一つだけプルダウン
+const expandedTeamId = ref(null)
+
 const selectRoom = (roomId) => {
   currentRoom.value = roomId
   emit('room-changed', roomId)
+  if (rooms[roomId] && rooms[roomId].children) {
+    rooms[roomId].expanded = !rooms[roomId].expanded
+  }
+  /*const team = rooms[roomId]
+  if (team && team.children) {
+    // すでに展開中なら閉じる、違うチームなら切り替え
+    if (expandedTeamId.value === roomId) {
+      expandedTeamId.value = null
+    } else {
+      expandedTeamId.value = roomId
+    }
+  } else {
+    // マッチなど展開無関係なら閉じる
+    expandedTeamId.value = null
+  }*/
 }
 
 const getRoomsByParent = (parentId) => {
@@ -85,11 +104,12 @@ const isRoomActive = (roomId) => {
   return currentRoom.value === roomId
 }
 
+/*いらない
 const toggleExpand = (roomId) => {
   if (rooms[roomId] && rooms[roomId].children) {
     rooms[roomId].expanded = !rooms[roomId].expanded
   }
-}
+}*/
 // #endregion
 
 // #region lifecycle
@@ -148,8 +168,8 @@ const onExit = () => {
         >
           <span 
             class="expand-icon"
-            v-if="team.children && team.children.length > 0"
-            @click.stop="toggleExpand(team.id)"
+
+            @click.stop="selectRoom(team.id)"
           >
             {{ team.expanded ? '▼' : '▶' }}
           </span>
