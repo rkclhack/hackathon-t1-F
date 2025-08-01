@@ -2,6 +2,51 @@
 const roomUsers = new Map() // roomId -> Set(userIds)
 const userRooms = new Map() // userId -> roomId
 
+let rooms = {
+  'soccer-club': {
+    name: 'サッカー部全体',
+    type: 'public',
+    icon: '🏆',
+    members: ['all']
+  },
+  'team-a': {
+    name: 'Aチーム',
+    type: 'team',
+    icon: '📁',
+    parent: 'soccer-club',
+    children: ['team-a-match-a', 'team-a-match-b'],
+    expanded: true
+  },
+  'team-a-match-a': {
+    name: '試合A',
+    type: 'match',
+    icon: '🥅',
+    parent: 'team-a'
+  },
+  'team-a-match-b': {
+    name: '試合B',
+    type: 'match',
+    icon: '🥅',
+    parent: 'team-a'
+  },
+  'team-b': {
+    name: 'Bチーム',
+    type: 'team',
+    icon: '📁',
+    parent: 'soccer-club',
+    expanded: false
+  },
+  'team-c': {
+    name: 'Cチーム',
+    type: 'team',
+    icon: '📁',
+    parent: 'soccer-club',
+    expanded: false
+  }
+}
+
+let new_roomCount = Object.keys(rooms).length; // 既存ルーム数をカウント
+
 export default (io, socket) => {
   console.log('ユーザーが接続しました:', socket.id)
 
@@ -75,6 +120,28 @@ export default (io, socket) => {
     if (currentRoom) {
       leaveRoom(socket, currentRoom, 'Unknown User')
     }
+  })
+
+  socket.on("EmitNewRoom", (data) => {
+    console.log(data);
+    if(data.name === "") {
+      socket.emit("onNewRoom", rooms)
+      return
+    }
+    // createNew_Room(data.name)
+    const newId = `room-${Date.now()}`
+    rooms[newId] = {
+      name: data.name,
+      type: 'team',
+      icon: '📁',
+      parent: 'soccer-club',
+      expanded: false
+    }
+    io.emit("onNewRoom",rooms)
+  })
+
+  socket.on("fetchRooms", () => {
+    io.emit("fetchServerRooms", rooms)
   })
 }
 
