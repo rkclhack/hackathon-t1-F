@@ -1,13 +1,11 @@
 <script setup>
 import { inject, ref, reactive, onMounted, watch, nextTick, computed } from "vue"
 import socketManager from '../socketManager.js'
-import { useRouter } from "vue-router"
 import Sidebar from "./Sidebar.vue"
 import StrategyBoard from "./StrategyBoard.vue"
 
 // #region global state
 const userName = inject("userName")
-const router = useRouter()
 // #endregion
 
 // #region local variable
@@ -155,9 +153,8 @@ watch(currentRoom, (newRoomId, oldRoomId) => {
 // #region browser event handler
 // 投稿メッセージをサーバに送信する（ルーム対応版）
 const onPublish = () => {
-  if (!chatContent.value) {
-    alert("投稿内容を入力してください。")
-    return
+  if (!chatContent.value.trim()) {
+    return // 空文字や空白のみの場合は送信しない
   }
 
   // 現在のルームに投稿メッセージを送信
@@ -172,46 +169,16 @@ const onPublish = () => {
   chatContent.value = ""
 }
 
-// 退室メッセージをサーバに送信する
-const onExit = () => {
-  // 現在のルームから退出
-  if (currentRoom.value) {
-    socket.emit("leaveRoom", { 
-      roomId: currentRoom.value, 
-      userName: userName.value 
-    })
-  }
-
-  // 退室メッセージを送信
-  socket.emit("exitEvent", { userName: userName.value })
-
-  // 入力欄を初期化
-  chatContent.value = ""
-
-  // チャット画面から退室する（ログのみ、メッセージには追加しない）
-  // console.log(`${userName.value}さんが退室しました。`)
-  
-  router.push({ name: 'login' })
-}
-
-// メモを画面上に表示する
-// const onMemo = () => {
-//   if (!chatContent.value) {
-//     alert("メモの内容を入力してください。")
-//     return
-//   }
-  
-//   // 現在のルームのメッセージリストにメモを追加
-//   const memoMessage = createMessageObject(userName.value, chatContent.value, 'memo')
-//   addMessageToRoom(currentRoom.value, memoMessage)
-
-//   // 入力欄を初期化
-//   chatContent.value = ""
-// }
-
 const onRoomChange = (roomId) => {
   currentRoom.value = roomId
   // console.log(`ルーム切り替え: ${rooms[roomId]?.name}`)
+}
+
+// 戦略更新イベントハンドラー
+const onStrategyUpdated = (data) => {
+  if (rooms[data.roomId]) {
+    rooms[data.roomId].strategy = data.strategy
+  }
 }
 // #endregion
 
@@ -415,16 +382,9 @@ const hasTimestamp = (messageObj) => {
     <Sidebar @room-changed="onRoomChange" />
     <div class="main-content">
       <div class="mx-auto my-5 px-4">
-        <h1 class="text-h3 font-weight-medium">Vue.js Chat チャットルーム</h1>
         <div class="mt-10">
-          <p>ログインユーザ：{{ userName }}さん</p>
-          <p>現在のルーム：{{ rooms[currentRoom]?.name }}</p>
-          
           <!-- チャットメッセージ表示エリア -->
           <div class="chat-area mt-5" v-if="currentRoomMessages.length !== 0">
-            <h4>{{ rooms[currentRoom]?.name }} のメッセージ ({{ currentRoomMessages.length }}件):</h4>
-            <p class="storage-info">※ ローカルストレージに自動保存されます</p>
-            
             <div v-for="(message, i) in currentRoomMessages" :key="i" class="chat-item" @contextmenu.prevent="isMyMessage(message) ? deleteMessage(message) : null">
               <div class="message-container">
                 <div class="message-bubble" :class="{ 
@@ -442,33 +402,35 @@ const hasTimestamp = (messageObj) => {
           </div>
 
           <!-- 入力エリア -->
-          <v-container class="pa-0 mt-5">
-            <v-row dense>
-              <v-col cols="12">
-                <textarea variant="outlined" placeholder="投稿文を入力してください" rows="3" class="area" v-model="chatContent" style="width: 100%; box-sizing: border-box;"></textarea>
-              </v-col>
-              <v-col cols="4">
-                <v-btn block color="blue-darken-4" style="color: white;" @click="onPublish">投稿</v-btn>
-              </v-col>
-              <!-- <v-col cols="4">
-                <v-btn block color="orange-darken-2" style="color: white;" @click="onMemo">メモ</v-btn>
-              </v-col> -->
-              <v-col cols="4">
-                <v-btn block color="red-darken-2" style="color: white;" @click="clearMessageHistory">履歴削除</v-btn>
-              </v-col>
-            </v-row>
-          </v-container>
+          <div class="input-container mt-5">
+            <div class="chat-input-wrapper">
+              <textarea 
+                v-model="chatContent" 
+                placeholder="メッセージを入力..."
+                class="chat-input"
+                rows="1"
+              ></textarea>
+              <button 
+                @click="onPublish"
+                :disabled="!chatContent.trim()"
+                class="send-button"
+                :class="{ 'send-button-active': chatContent.trim() }"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
         
-        <!-- 退室ボタン -->
-        <router-link to="/" class="link">
-          <v-btn color="grey-darken-2" style="color: white; margin-top: 16px;" @click="onExit">退室する</v-btn>
-        </router-link>
       </div>
     </div>
     <StrategyBoard 
       :currentRoom="currentRoom" 
       :roomData="rooms[currentRoom]" 
+      @strategy-updated="onStrategyUpdated"
     />
   </div>
 </template>
@@ -480,34 +442,80 @@ const hasTimestamp = (messageObj) => {
 }
 
 .main-content {
+  background-color: #0046a21c;
   flex: 1;
   overflow-y: auto;
+  width: min(500px);
 }
 
 .link {
   text-decoration: none;
 }
 
-.area {
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 8px;
+/* 入力エリア */
+.input-container {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.chat-input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  background: #f5f5f5;
+  border-radius: 25px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
   font-family: inherit;
   font-size: 14px;
-  resize: vertical;
+  line-height: 1.4;
+  padding: 8px 12px;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
-.area:focus {
-  outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+.chat-input::placeholder {
+  color: #999;
 }
 
-.storage-info {
-  font-size: 12px;
-  color: #666;
-  margin: 4px 0;
+.send-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #ccc;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-button-active {
+  background: #0046A2 !important;
+  transform: scale(1.05);
+}
+
+.send-button:hover:not(:disabled) {
+  background: #00377f;
+  transform: scale(1.1);
 }
 
 /* チャットエリアのスタイル */
@@ -518,6 +526,7 @@ const hasTimestamp = (messageObj) => {
   border-radius: 8px;
   padding: 16px;
   background-color: #fafafa;
+  margin-bottom: 16px;
 }
 
 .chat-item {
@@ -540,7 +549,7 @@ const hasTimestamp = (messageObj) => {
 }
 
 .message-bubble.my-message {
-  background-color: #1976d2;
+  background-color: #0046A2;
   margin-left: auto;
   margin-right: 0;
 }
@@ -569,7 +578,7 @@ const hasTimestamp = (messageObj) => {
   left: auto;
   right: -8px;
   border-right: none;
-  border-left: 8px solid #1976d2;
+  border-left: 8px solid #0046A2;
 }
 
 .message-bubble.memo-message::before {
@@ -628,5 +637,18 @@ const hasTimestamp = (messageObj) => {
 
 .chat-area::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+.chat-input::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-input::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
 }
 </style>

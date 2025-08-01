@@ -48,7 +48,7 @@ const onEnter = () => {
       <!-- 画像挿入 -->
       <v-text-field
         v-model="inputUserName"
-        label="USERNAME"
+        label="ユーザーネームを入力してください"
         prepend-inner-icon="mdi-account"
         outlined
         dense
@@ -63,7 +63,7 @@ const onEnter = () => {
         block
         elevation="2"
       >
-        <span class="login-text">LOGIN</span>
+        <span class="login-text">ログイン</span>
       </v-btn>
   </div>
   </div>

@@ -4,6 +4,7 @@ import socketManager from '../socketManager.js'
 
 const currentRoom = inject("currentRoom")
 const rooms = inject("rooms")
+const userName = inject("userName")
 
 // #region emits
 // 親コンポーネントに渡すイベントを定義
@@ -97,12 +98,34 @@ onMounted(() => {
   socket.emit("fetchRooms", "")
 })
 // #endregion
+
+// 退室メッセージをサーバに送信する
+const onExit = () => {
+  // 現在のルームから退出
+  if (currentRoom.value) {
+    socket.emit("leaveRoom", { 
+      roomId: currentRoom.value, 
+      userName: userName.value 
+    })
+  }
+
+  // 退室メッセージを送信
+  socket.emit("exitEvent", { userName: userName.value })
+
+  // 入力欄を初期化
+  chatContent.value = ""
+
+  // チャット画面から退室する（ログのみ、メッセージには追加しない）
+  // console.log(`${userName.value}さんが退室しました。`)
+  
+  router.push({ name: 'login' })
+}
 </script>
 
 <template>
   <div class="sidebar">
     <div class="sidebar-header">
-      <h3>チャットルーム</h3>
+      <h3 class="sidebar-title">Vamos!</h3>
     </div>
     
     <div class="room-list">
@@ -163,12 +186,43 @@ onMounted(() => {
         {{ placeholderText }}
       </div>
     </div>
-
+    <div class="dis">
+      <div class="user-info">
+        <span class="user-name">👤 {{ userName }}</span>
+      </div>
+      <div class="exit-button">
+        <router-link to="/" class="link">
+          <v-btn color="red-darken-2" style="color: white; margin-top: 16px;" @click="onExit">ログアウト</v-btn>
+        </router-link>
+      </div>
+    </div>
   </div>
 
 </template>
 
 <style scoped>
+.exit-button {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+}
+.user-info {
+  position: absolute;
+  bottom: calc(52px + 16px);
+  left: 16px;
+}
+.user-name {
+  font-size: 20px;
+  color: #333;
+}
+.sidebar-title {
+  position: relative;
+  color: #0046A2;
+  font-family: "Mrs Sheppards", cursive;
+  font-size: 4rem; /* このサイズが適用されるはず */
+  text-align: center;
+}
+
 .sidebar {
   width: 250px;
   height: 100vh;
@@ -178,16 +232,9 @@ onMounted(() => {
 }
 
 .sidebar-header {
-  padding: 16px;
+  padding: 7px;
   border-bottom: 1px solid #ddd;
-  background-color: #fff;
-}
-
-.sidebar-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
+  background-color: #f5f5f5;
 }
 
 .room-list {
@@ -208,12 +255,12 @@ onMounted(() => {
 }
 
 .room-item.active {
-  background-color: #007acc;
+  background-color: #0046A2;
   color: white;
 }
 
 .room-item.active:hover {
-  background-color: #005a9e;
+  background-color: #003b89;
 }
 
 .top-level {
