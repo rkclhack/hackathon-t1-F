@@ -40,15 +40,29 @@ let rooms = {
     type: 'team',
     icon: '📁',
     parent: 'soccer-club',
+    children: ['team-b-match-c'],
     expanded: false
+  },
+  'team-b-match-c': {
+    name: '試合C',
+    type: 'match',
+    icon: '🥅',
+    parent: 'team-b'
   },
   'team-c': {
     name: 'Cチーム',
     type: 'team',
     icon: '📁',
     parent: 'soccer-club',
+    children: ['team-c-match-d'],
     expanded: false
-  }
+  },
+  'team-c-match-d': {
+    name: '試合D',
+    type: 'match',
+    icon: '🥅',
+    parent: 'team-c'
+  },
 }
 
 let new_roomCount = Object.keys(rooms).length; // 既存ルーム数をカウント

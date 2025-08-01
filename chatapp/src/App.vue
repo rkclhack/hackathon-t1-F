@@ -44,6 +44,7 @@ const rooms = reactive({
     type: 'team',
     icon: '📁',
     parent: 'soccer-club',
+    children: [],
     expanded: false
   },
   'team-c': {
@@ -51,6 +52,7 @@ const rooms = reactive({
     type: 'team',
     icon: '📁',
     parent: 'soccer-club',
+    children: [],
     expanded: false
   }
 })
