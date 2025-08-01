@@ -77,7 +77,10 @@ const expandedTeamId = ref(null)
 const selectRoom = (roomId) => {
   currentRoom.value = roomId
   emit('room-changed', roomId)
-  const team = rooms[roomId]
+  if (rooms[roomId] && rooms[roomId].children) {
+    rooms[roomId].expanded = !rooms[roomId].expanded
+  }
+  /*const team = rooms[roomId]
   if (team && team.children) {
     // すでに展開中なら閉じる、違うチームなら切り替え
     if (expandedTeamId.value === roomId) {
@@ -88,7 +91,7 @@ const selectRoom = (roomId) => {
   } else {
     // マッチなど展開無関係なら閉じる
     expandedTeamId.value = null
-  }
+  }*/
 }
 
 const getRoomsByParent = (parentId) => {
@@ -168,14 +171,14 @@ const onExit = () => {
 
             @click.stop="selectRoom(team.id)"
           >
-            {{ expandedTeamId === team.id ? '▼' : '▶' }}
+            {{ team.expanded ? '▼' : '▶' }}
           </span>
           <span class="room-icon">{{ team.icon }}</span>
           <span class="room-name">{{ team.name }}</span>
         </div>
 
         <!-- マッチレベル -->
-        <div v-if="expandedTeamId === team.id && team.children" class="match-section">
+        <div v-if="team.expanded && team.children" class="match-section">
           <div 
             v-for="matchId in team.children" 
             :key="matchId"
